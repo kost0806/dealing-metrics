@@ -1,30 +1,6 @@
-import { initializeApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-
-// Validate Firebase configuration
-const validateConfig = () => {
-  const requiredEnvVars = [
-    'NEXT_PUBLIC_FIREBASE_API_KEY',
-    'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
-    'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
-    'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
-    'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
-    'NEXT_PUBLIC_FIREBASE_APP_ID',
-  ];
-
-  const missing = requiredEnvVars.filter(
-    (key) => !process.env[key]
-  );
-
-  if (missing.length > 0) {
-    console.error('Missing Firebase environment variables:', missing);
-    console.error('Please check your .env.local file and restart the development server.');
-    return false;
-  }
-
-  return true;
-};
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -36,20 +12,31 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Validate before initialization
-if (!validateConfig()) {
-  throw new Error(
-    'Firebase configuration is incomplete. Please check your .env.local file and restart the server.'
-  );
+// Initialize Firebase only on client side
+let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
+
+// Only initialize Firebase in the browser
+if (typeof window !== 'undefined') {
+  // Validate configuration
+  const hasAllEnvVars = Object.values(firebaseConfig).every(value => value);
+
+  if (!hasAllEnvVars) {
+    console.error('Missing Firebase environment variables');
+    console.error('Please check your .env.local file');
+  } else {
+    // Initialize Firebase only once
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    auth = getAuth(app);
+    db = getFirestore(app);
+
+    // Log configuration status (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ Firebase initialized successfully');
+      console.log('Project ID:', firebaseConfig.projectId);
+    }
+  }
 }
 
-// Initialize Firebase only once
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-
-// Log configuration status (only in development)
-if (process.env.NODE_ENV === 'development') {
-  console.log('✅ Firebase initialized successfully');
-  console.log('Project ID:', firebaseConfig.projectId);
-}
+export { auth, db };
