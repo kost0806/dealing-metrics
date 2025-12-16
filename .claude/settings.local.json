@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(test -f C:UserskimmiIdeaProjectsdealing-metricsserviceAccountKey.json)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
