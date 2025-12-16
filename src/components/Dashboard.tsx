@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import DamageInput from './DamageInput';
 import MetricsCard from './MetricsCard';
 import { calculateAllMetrics } from '../utils/metricsCalculator';
-import { saveDamageEntry, getAllUserTotals } from '../utils/firebaseService';
+import { saveDamageEntry, getAllUserTotals } from '../utils/apiService';
 import { DamageMetrics } from '../types';
 import './Dashboard.css';
 

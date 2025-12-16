@@ -29,6 +29,10 @@ dist-ssr
 .env.production
 .env*.local
 
+# Firebase Service Account (NEVER commit this!)
+serviceAccountKey.json
+*-firebase-adminsdk-*.json
+
 # Next.js
 .next
 out
