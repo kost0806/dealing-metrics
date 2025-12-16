@@ -61,7 +61,7 @@ export async function GET() {
       ),
 
       // 권장사항
-      recommendations: [],
+      recommendations: [] as string[],
     };
 
     // 권장사항 생성

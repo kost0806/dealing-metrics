@@ -182,7 +182,7 @@ export async function GET() {
     };
 
     // 가능한 해결방법 제시
-    diagnostics.troubleshooting = [];
+    diagnostics.troubleshooting = [] as string[];
 
     if (!diagnostics.envVarsPresent.projectId) {
       diagnostics.troubleshooting.push('❌ FIREBASE_ADMIN_PROJECT_ID 환경변수가 설정되지 않았습니다.');
