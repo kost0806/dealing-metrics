@@ -36,35 +36,60 @@ function initializeFirebaseAdmin() {
   const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
 
   // Option 2: Using environment variables (recommended for production/Vercel)
+  // Vercel stores environment variables with literal \n (two characters)
+  // We need to convert them to actual newline characters
+  const rawPrivateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
+  const privateKey = rawPrivateKey
+    ? rawPrivateKey.replace(/\\n/gm, '\n').trim()
+    : undefined;
+
   const serviceAccount = {
     projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
     clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    privateKey: privateKey,
   };
 
   try {
     if (serviceAccountPath) {
       // Use service account file
+      console.log('🔑 Using service account file:', serviceAccountPath);
       adminApp = initializeApp({
         credential: cert(require(serviceAccountPath)),
       });
     } else if (serviceAccount.projectId && serviceAccount.clientEmail && serviceAccount.privateKey) {
       // Use environment variables
+      console.log('🔑 Using environment variables for Firebase Admin');
+      console.log('   Project ID:', serviceAccount.projectId);
+      console.log('   Client Email:', serviceAccount.clientEmail);
+      console.log('   Private Key length:', serviceAccount.privateKey?.length);
+      console.log('   Private Key has newlines:', serviceAccount.privateKey?.includes('\n'));
+      console.log('   Private Key starts with:', serviceAccount.privateKey?.substring(0, 30));
+
       adminApp = initializeApp({
         credential: cert(serviceAccount),
       });
     } else {
+      const missing = [];
+      if (!serviceAccount.projectId) missing.push('FIREBASE_ADMIN_PROJECT_ID');
+      if (!serviceAccount.clientEmail) missing.push('FIREBASE_ADMIN_CLIENT_EMAIL');
+      if (!serviceAccount.privateKey) missing.push('FIREBASE_ADMIN_PRIVATE_KEY');
+
       throw new Error(
-        'Firebase Admin credentials not configured. ' +
+        `Firebase Admin credentials not configured. Missing: ${missing.join(', ')}. ` +
         'Set FIREBASE_SERVICE_ACCOUNT_PATH or FIREBASE_ADMIN_* environment variables.'
       );
     }
 
     adminDb = getFirestore(adminApp);
-    console.log('✅ Firebase Admin initialized (server-side only)');
+    console.log('✅ Firebase Admin initialized successfully (server-side only)');
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Failed to initialize Firebase Admin:', error);
+    console.error('   Error code:', error.code);
+    console.error('   Error message:', error.message);
+    if (error.stack) {
+      console.error('   Stack trace:', error.stack.split('\n').slice(0, 3).join('\n'));
+    }
     throw error;
   }
 }
