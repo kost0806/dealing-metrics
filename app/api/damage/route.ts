@@ -45,12 +45,25 @@ export async function POST(request: NextRequest) {
       entryId
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving damage entry:', error);
-    return NextResponse.json(
-      { error: 'Failed to save damage entry' },
-      { status: 500 }
-    );
+
+    // 개발 환경에서는 상세한 에러 정보 제공 (모바일 디버깅용)
+    const errorResponse: any = {
+      error: 'Failed to save damage entry',
+      message: error?.message || 'Unknown error',
+    };
+
+    if (process.env.NODE_ENV !== 'production') {
+      errorResponse.debug = {
+        name: error?.name,
+        code: error?.code,
+        stack: error?.stack?.split('\n').slice(0, 5),
+        errorInfo: error?.errorInfo,
+      };
+    }
+
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }
 
@@ -67,11 +80,24 @@ export async function GET() {
       entries
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching damage entries:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch damage entries' },
-      { status: 500 }
-    );
+
+    // 개발 환경에서는 상세한 에러 정보 제공 (모바일 디버깅용)
+    const errorResponse: any = {
+      error: 'Failed to fetch damage entries',
+      message: error?.message || 'Unknown error',
+    };
+
+    if (process.env.NODE_ENV !== 'production') {
+      errorResponse.debug = {
+        name: error?.name,
+        code: error?.code,
+        stack: error?.stack?.split('\n').slice(0, 5),
+        errorInfo: error?.errorInfo,
+      };
+    }
+
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }
