@@ -38,9 +38,13 @@ function initializeFirebaseAdmin() {
   // Option 2: Using environment variables (recommended for production/Vercel)
   // Vercel stores environment variables with literal \n (two characters)
   // We need to convert them to actual newline characters
+  // Also remove any surrounding quotes that might have been accidentally included
   const rawPrivateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
   const privateKey = rawPrivateKey
-    ? rawPrivateKey.replace(/\\n/gm, '\n').trim()
+    ? rawPrivateKey
+        .replace(/^["']|["']$/g, '')  // Remove leading/trailing quotes
+        .replace(/\\n/gm, '\n')        // Convert literal \n to actual newlines
+        .trim()
     : undefined;
 
   const serviceAccount = {

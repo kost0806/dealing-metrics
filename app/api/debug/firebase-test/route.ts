@@ -30,7 +30,10 @@ export async function GET() {
     // Check private key format
     const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
     if (privateKey) {
-      const processedKey = privateKey.replace(/\\n/gm, '\n').trim();
+      const processedKey = privateKey
+        .replace(/^["']|["']$/g, '')  // Remove leading/trailing quotes
+        .replace(/\\n/gm, '\n')        // Convert literal \n to actual newlines
+        .trim();
       diagnostics.privateKeyDiagnostics = {
         raw: {
           length: privateKey.length,
@@ -84,7 +87,10 @@ export async function GET() {
       const serviceAccount = {
         projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
         clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/gm, '\n').trim(),
+        privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY
+          ?.replace(/^["']|["']$/g, '')  // Remove leading/trailing quotes
+          .replace(/\\n/gm, '\n')        // Convert literal \n to actual newlines
+          .trim(),
       };
 
       diagnostics.initializationAttempt = {
@@ -192,6 +198,11 @@ export async function GET() {
     }
     if (!diagnostics.envVarsPresent.privateKey) {
       diagnostics.troubleshooting.push('❌ FIREBASE_ADMIN_PRIVATE_KEY 환경변수가 설정되지 않았습니다.');
+    }
+
+    if (error?.message?.includes('DECODER') || error?.message?.includes('unsupported')) {
+      diagnostics.troubleshooting.push('🔑 Private key 디코딩 실패: Vercel 환경변수에서 private key를 큰따옴표 없이 입력했는지 확인하세요.');
+      diagnostics.troubleshooting.push('💡 Vercel에서 환경변수 값을 입력할 때 큰따옴표로 감싸지 마세요. 값만 직접 붙여넣으세요.');
     }
 
     if (error?.code === 'auth/invalid-credential' || error?.message?.includes('credential')) {

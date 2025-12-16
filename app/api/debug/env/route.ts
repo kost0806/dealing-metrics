@@ -10,7 +10,10 @@ export async function GET() {
   try {
     const rawPrivateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
     const processedPrivateKey = rawPrivateKey
-      ? rawPrivateKey.replace(/\\n/gm, '\n').trim()
+      ? rawPrivateKey
+          .replace(/^["']|["']$/g, '')  // Remove leading/trailing quotes
+          .replace(/\\n/gm, '\n')        // Convert literal \n to actual newlines
+          .trim()
       : undefined;
 
     const envCheck = {
@@ -38,6 +41,9 @@ export async function GET() {
           // 키가 올바른 PEM 형식인지 추가 검증
           hasPemHeader: rawPrivateKey?.includes('-----BEGIN PRIVATE KEY-----') || false,
           hasPemFooter: rawPrivateKey?.includes('-----END PRIVATE KEY-----') || false,
+          // 큰따옴표 감지
+          hasLeadingQuote: rawPrivateKey?.startsWith('"') || rawPrivateKey?.startsWith("'") || false,
+          hasTrailingQuote: rawPrivateKey?.endsWith('"') || rawPrivateKey?.endsWith("'") || false,
         },
         processed: {
           format: processedPrivateKey
@@ -65,6 +71,9 @@ export async function GET() {
     };
 
     // 권장사항 생성
+    if (envCheck.privateKey.raw.hasLeadingQuote || envCheck.privateKey.raw.hasTrailingQuote) {
+      envCheck.recommendations.push('⚠️ WARNING: Private key has quotes around it! Remove quotes from Vercel environment variable. The code will auto-fix this, but it\'s better to fix it in Vercel settings.');
+    }
     if (!envCheck.privateKey.raw.hasLiteralBackslashN && !envCheck.privateKey.raw.hasActualNewline) {
       envCheck.recommendations.push('⚠️ Private key seems to have no newlines at all - check if the key was copied correctly');
     }
@@ -77,7 +86,7 @@ export async function GET() {
     if (!envCheck.allRequiredPresent) {
       envCheck.recommendations.push('❌ Some required environment variables are missing');
     }
-    if (envCheck.allRequiredPresent && envCheck.privateKey.processed.hasActualNewline) {
+    if (envCheck.allRequiredPresent && envCheck.privateKey.processed.hasActualNewline && !envCheck.privateKey.raw.hasLeadingQuote) {
       envCheck.recommendations.push('✅ All environment variables are properly configured');
     }
 
